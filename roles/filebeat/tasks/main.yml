@@ -11,11 +11,16 @@
   when: ansible_distribution == "Debian"
 
 - name: Creates beats source list
-  command: echo "deb https://packages.elastic.co/beats/apt stable main" |  sudo tee -a /etc/apt/sources.list.d/beats.list
+  apt_repository:
+    repo: "deb https://packages.elastic.co/beats/apt stable main"
+    #command: echo "deb https://packages.elastic.co/beats/apt stable main" |  sudo tee -a /etc/apt/sources.list.d/beats.list
   when: ansible_distribution == "Debian"
 
 - name: Install/Add GPG key
-  command: wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+  apt_key:
+    url: https://packages.elastic.co/GPG-KEY-elasticsearch
+    state: present
+    #command: wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
   when: ansible_distribution == "Debian"
 
 - name: install the Filebeat package
@@ -47,4 +52,4 @@
     src: templates/filebeat.yml
     dest: /etc/filebeat/filebeat.yml
   notify:
-    - start filebeat
+      - start filebeat
