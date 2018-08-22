@@ -1,0 +1,28 @@
+---
+# tasks file for roles/elk
+- name: Upgrade all packages
+  yum:
+    name: '*'
+    state: latest
+
+- name: Download ElasticSearch
+  get_url:
+    url: https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.3.2.rpm
+    dest: /opt
+
+- name: import PGP key
+  command: rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+  args:
+    chdir: /opt
+
+- name: Install Elasticsearch
+  command: rpm --install elasticsearch-6.3.2.rpm
+  args:
+    chdir: /opt
+
+- name: Enable elasticsearch and ensure it is started
+  systemd:
+    daemon_reload: yes
+    enabled: yes
+    state: started
+    name: elasticsearch.service

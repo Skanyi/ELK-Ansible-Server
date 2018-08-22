@@ -1,0 +1,46 @@
+---
+# tasks file for roles/logstash
+
+- name: Add Logstash Repo
+  template:
+    src: templates/logstash.repo
+    dest: /etc/yum.repos.d/logstash.repo
+
+- name: Install Logstash
+  yum:
+    name: logstash
+    state: present
+
+- name: Generate Self signed certs
+  command: openssl req -x509 -nodes -subj '/CN={{ inventory_hostname }}' -days 365 -newkey rsa:4096 -sha256 -keyout {{ item.key }} -out {{ item.cert }} creates={{ item.cert }}
+  with_items:
+    - {'key': private/logstash-forwarder.pem, 'cert': certs/logstash-forwarder.crt}
+  args:
+    chdir: /etc/pki/tls/
+
+- name: Configure Logstash input file
+  template:
+    src: templates/input.conf
+    dest: /etc/logstash/conf.d/01-beats-input.conf
+
+- name: Configure Logstash Filter file
+  template:
+    src: templates/filter.conf
+    dest: /etc/logstash/conf.d/01-beats-filter.conf
+
+- name: Configure Logstash Output file
+  template:
+    src: templates/output.conf
+    dest: /etc/logstash/conf.d/01-beats-output.conf
+
+- name: Enable and start logstash
+  systemd:
+    daemon_reload: yes
+    enabled: yes
+    state: started
+    name: logstash
+
+- name: Copy ssl certs to the client server
+  command: scp /etc/pki/tls/certs/logstash-forwarder.crt vagrant@192.168.33.21:/etc/pki/tls/certs/
+
+

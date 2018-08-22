@@ -1,0 +1,50 @@
+---
+# tasks file for roles/filebeat
+#create directory depending on the os running on client server(in this case debian)
+# if centos the directory already exist
+# this role is desgned for debian client distribution or centos
+
+- name: Create directory
+  file: 
+    path: /etc/pki/tls/certs/
+    state: directory
+  when: ansible_distribution == "Debian"
+
+- name: Creates beats source list
+  command: echo "deb https://packages.elastic.co/beats/apt stable main" |  sudo tee -a /etc/apt/sources.list.d/beats.list
+  when: ansible_distribution == "Debian"
+
+- name: Install/Add GPG key
+  command: wget -qO - https://packages.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+  when: ansible_distribution == "Debian"
+
+- name: install the Filebeat package
+  apt:
+    update_cache: yes
+    name: filebeat
+    state: present
+  when: ansible_distribution == "Debian"
+
+# CentOs Client server
+- name: Import public GPG key
+  command: rpm --import http://packages.elastic.co/GPG-KEY-elasticsearch
+  when: ansible_distribution == "CentOS"
+
+- name: Create yum repo for filebeat
+  template:
+    src: templates/filebeat.repo
+    dest: /etc/yum.repos.d/filebeat.repo
+  when: ansible_distribution == "CentOS"
+
+- name: Install filebeat
+  yum:
+    name: filebeat
+    state: present
+  when: ansible_distribution == "CentOS"
+
+- name: Configure filebeat
+  template:
+    src: templates/filebeat.yml
+    dest: /etc/filebeat/filebeat.yml
+  notify:
+    - start filebeat

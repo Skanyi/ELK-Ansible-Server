@@ -1,0 +1,26 @@
+filebeat:
+ prospectors:
+  - input_type: syslog
+    paths:
+     - /var/log/secure
+     - /var/log/messages
+     - /var/log/syslog
+    fields:
+      document_type: syslog
+    exclude_lines: ["^#"]
+    exclude_files: [".zip"]
+    ignore_older: 24h
+
+output:
+
+  logstash:
+    hosts: ["192.168.33.13:5044"]
+    bulk_max_size: 2048
+    index: filebeat
+    certificate_authorities: ["/etc/pki/tls/certs/logstash-forwarder.crt"]
+
+shipper:
+logging:
+
+  files:
+    rotateeverybytes: 10485760 # = 10MB

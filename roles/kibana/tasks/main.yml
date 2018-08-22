@@ -1,0 +1,56 @@
+---
+# tasks file for roles/kibana
+- name: Download Kibana
+  get_url:
+    url: https://artifacts.elastic.co/downloads/kibana/kibana-6.2.3-x86_64.rpm
+    dest: /opt
+
+- name: Install Kibana
+  command: rpm --install kibana-6.2.3-x86_64.rpm
+  args:
+    chdir: /opt
+
+- name: Enable and start Kibana
+  systemd:
+    daemon_reload: yes
+    enabled: yes
+    state: started
+    name: kibana
+
+- name: Install Nginx and dependancies
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - epel-release
+    - nginx
+    - httpd-tools
+    - python-pip
+
+- name: Install passlib
+  pip:
+    name: passlib
+    state: present
+
+- name: Create admin username/password for Kibana
+  htpasswd:
+    path: /etc/nginx/htpasswd.users
+    name: kibanaadmin
+    password: kibanapass
+
+- name: Configure nginx
+  template:
+    src: templates/nginx.conf
+    dest: /etc/nginx/nginx.con
+
+- name: kibana Config file
+  template:
+    src: templates/kibana.conf
+    dest: /etc/nginx/conf.d/kibana.conf
+  
+- name: Enable and start nginx
+  systemd:
+    enabled: yes
+    state: started
+    name: nginx

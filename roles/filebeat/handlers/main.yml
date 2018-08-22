@@ -1,0 +1,7 @@
+---
+# handlers file for roles/filebeat
+- name: start filebeat
+  service:
+    state: started
+    enabled: yes
+    name: filebeat
